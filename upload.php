@@ -12,15 +12,29 @@ class DB
 		$servername = "localhost";
 		$username = "root";
 		$password = "root";
-		$database = "percobaan";
+		$database = "n2";
 		$this->con = new mysqli($servername, $username, $password, $database);
+	}
+
+	public function generateCode(){
+		$code = 'AST0000001';
+		$q = "SELECT code_asset from kmt_asset_inventory where id_shop=2388 and code_asset like 'AST%' group by code_asset order by code_asset DESC";
+		//$q = "SELECT nama from karyawan where nama like 'AST%' group by nama order by nama DESC";
+		$query = $this->con->query($q);
+		if($query->num_rows > 0){
+			$code = $query->fetch_row()[0];
+			$a = intval(substr($code, 6)) + 1;
+			$counter	= str_repeat('0', (7-strlen($a))).$a;
+			$code = 'AST'.$counter;
+		}
+
+		return $code;
 	}
 }
 
-// function 
 
-// $db = new DB;
-$db = new mysqli("localhost", "root", "root", "percobaan");
+set_time_limit(0);
+$db = new DB;
 $folder = "files";
 if(isset($_POST)){
 	$ext = ucfirst(end(explode('.',$_FILES['file-upload']['name'])));
@@ -30,19 +44,38 @@ if(isset($_POST)){
 	$reader = IOFactory::createReader($ext);	
 	$spreadsheet = $reader->load($file);
 	$sheetData = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
-	$i = 1;
-	$err = 0;
-	//Loop data excel
+	$inserted = 0;
+	$x = 1;
+	$cols = [];
+
+	
+	// Loop data excel
 	foreach ($sheetData as $key => $v) {
-		if($i == 1){
+		if($x == 1){
+			unset($v['V']);
 			$cols = implode(",",$v);
-		}elseif($i > 1){
-			$ins = $db->query("Insert into karyawan (".$cols.") values ('".implode("','",$v)."')");
+		}elseif($x > 1){
+			$q = $db->generateCode();
+			if($v['V'] > 1){
+				$jml = $v['V'];
+				unset($v['V']);
+				for ($i=0; $i < $jml ; $i++) { 
+					$v['B'] = $db->generateCode();
+					$v['O'] = $v['B'];
+					$db->con->query("Insert into kmt_asset_inventory (".$cols.") values ('".implode("','",$v)."')");
+					$inserted++;
+				}
+				$inserted--;
+			}
+			unset($v['V']);
+			$v['B'] = $db->generateCode();
+			$v['O'] = $v['B'];
+			$db->con->query("Insert into kmt_asset_inventory (".$cols.") values ('".implode("','",$v)."')");
 		}
-		$i++;
-		$err++;
+		$x++;
+		$inserted++;
 	}
 
-	echo ($err - 1)." Data Inserted!";
+	echo ($inserted - 1)." Data Inserted!";
 
 }
