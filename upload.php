@@ -61,7 +61,7 @@ if(isset($_POST)){
 				unset($v['V']);
 				for ($i=0; $i < $jml ; $i++) { 
 					$v['B'] = $db->generateCode();
-					$v['O'] = $v['B'];
+					$v['P'] = $v['B'];
 					$db->con->query("Insert into kmt_asset_inventory (".$cols.") values ('".implode("','",$v)."')");
 					$inserted++;
 				}
@@ -69,7 +69,7 @@ if(isset($_POST)){
 			}
 			unset($v['V']);
 			$v['B'] = $db->generateCode();
-			$v['O'] = $v['B'];
+			$v['P'] = $v['B'];
 			$db->con->query("Insert into kmt_asset_inventory (".$cols.") values ('".implode("','",$v)."')");
 		}
 		$x++;
